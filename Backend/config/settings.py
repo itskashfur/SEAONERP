@@ -1,6 +1,19 @@
 from pathlib import Path
+import dj_database_url
 import os
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is missing.")
+
+DATABASES = {
+    "default": dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=0,
+        ssl_require=True,
+    )
+}
 BASE_DIR=Path(__file__).resolve().parent.parent
 
 # Lightweight .env loader so Windows users do not need an extra dependency.
