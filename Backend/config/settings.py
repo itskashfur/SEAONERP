@@ -11,16 +11,21 @@ if _env_file.exists():
         if _line and not _line.startswith("#") and "=" in _line:
             _key, _value = _line.split("=", 1)
             os.environ.setdefault(_key.strip(), _value.strip().strip('"').strip("'"))
-SECRET_KEY = os.getenv("SECRET_KEY", "seaon-local-development-key-change-before-production")
-DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes")
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
-# Vercel assigns a *.vercel.app hostname. Add any custom domain through
-# the ALLOWED_HOSTS environment variable (comma-separated).
-_allowed_hosts = os.getenv(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,.vercel.app"
-)
-ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts.split(",") if host.strip()]
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is missing.")
+
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "ALLOWED_HOSTS",
+        "127.0.0.1,localhost,.vercel.app"
+    ).split(",")
+    if host.strip()
+]
 INSTALLED_APPS=[
  "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes",
  "django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
@@ -61,7 +66,7 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "shaikayaan8340@gmail.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "zlfg kwhr wrjd vodz")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() in ("1", "true", "yes")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() in ("1", "true", "yes")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "shaikayaan8340@gmail.com")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()
 BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "SEAON ERP").strip()
