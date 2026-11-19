@@ -1,19 +1,7 @@
 from pathlib import Path
-import dj_database_url
 import os
+import dj_database_url
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is missing.")
-
-DATABASES = {
-    "default": dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=0,
-        ssl_require=True,
-    )
-}
 BASE_DIR=Path(__file__).resolve().parent.parent
 
 # Lightweight .env loader so Windows users do not need an extra dependency.
@@ -24,21 +12,16 @@ if _env_file.exists():
         if _line and not _line.startswith("#") and "=" in _line:
             _key, _value = _line.split("=", 1)
             os.environ.setdefault(_key.strip(), _value.strip().strip('"').strip("'"))
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "seaon-local-development-key-change-before-production")
+DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes")
 
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY environment variable is missing.")
-
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get(
-        "ALLOWED_HOSTS",
-        "127.0.0.1,localhost,.vercel.app"
-    ).split(",")
-    if host.strip()
-]
+# Vercel assigns a *.vercel.app hostname. Add any custom domain through
+# the ALLOWED_HOSTS environment variable (comma-separated).
+_allowed_hosts = os.getenv(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,.vercel.app"
+)
+ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts.split(",") if host.strip()]
 INSTALLED_APPS=[
  "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes",
  "django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
@@ -54,7 +37,30 @@ TEMPLATES=[{"BACKEND":"django.template.backends.django.DjangoTemplates","DIRS":[
  "django.template.context_processors.request","django.contrib.auth.context_processors.auth",
  "django.contrib.messages.context_processors.messages"]}}]
 WSGI_APPLICATION="config.wsgi.application"; ASGI_APPLICATION="config.asgi.application"
-DATABASES={"default":{"ENGINE":"django.db.backends.sqlite3","NAME":BASE_DIR/"seaon.db"}}
+
+# Use managed PostgreSQL in Vercel. Keep SQLite only for local development.
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=0,
+            ssl_require=True,
+        )
+    }
+elif os.getenv("VERCEL") == "1":
+    raise RuntimeError(
+        "DATABASE_URL is missing. Configure a PostgreSQL connection string "
+        "in Vercel Project Settings > Environment Variables."
+    )
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "seaon.db",
+        }
+    }
 AUTH_PASSWORD_VALIDATORS=[]
 LANGUAGE_CODE="en-us"; TIME_ZONE="Asia/Kolkata"; USE_I18N=True; USE_TZ=True
 STATIC_URL="/static/"; STATIC_ROOT=BASE_DIR/"staticfiles"
@@ -75,11 +81,11 @@ REST_FRAMEWORK={"DEFAULT_AUTHENTICATION_CLASSES":["erp.authentication.JWTAuthent
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "shaikayaan8340@gmail.com")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() in ("1", "true", "yes")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() in ("1", "true", "yes")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "shaikayaan8340@gmail.com")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()
 BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "SEAON ERP").strip()
