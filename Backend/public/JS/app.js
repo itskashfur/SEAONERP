@@ -1335,15 +1335,6 @@ async function renderNotifications(
 
 // Shared helper: Order table
 function formatOrderType(type) {
-    const labels = {
-        readymade: "Finished",
-        manufactured: "Semi-Finished"
-      };
-
-    const normalizedType = String(type || "").toLowerCase().trim();
-
-    return labels[normalizedType] || type || "—";
-}
     return rows.length
         ? `<div class="table-wrap">
             <table class="data-table">
