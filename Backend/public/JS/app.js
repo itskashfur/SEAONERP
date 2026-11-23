@@ -771,7 +771,7 @@ function editProduct(id) {
       </section>`;
     renderOrderForm();
     const draw=()=>{const q=$("#orderSearch").value.toLowerCase(),status=$("#orderStatus").value;const rows=state.orders.filter(o=>(!status||o.status===status)&&(!q||`${o.order_number} ${o.customer_name} ${o.product_name}`.toLowerCase().includes(q)));
-      $("#ordersRows").innerHTML=rows.length?rows.map(o=>{const next=o.status==="new-order"?"packed":o.status==="packed"?"dispatched":o.status==="dispatched"?"delivered":"";return `<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customer_name)}</td><td>${esc(o.order_type||"manufactured")}</td><td>${esc(o.product_name)}</td><td>${num(o.quantity,4)} ${esc(o.unit||"")}</td><td>${badge(o.status)}</td><td>${date(o.created_at)}</td><td>${next?`<select class="form-control order-action-select" data-transition="${o.id}" aria-label="Order action"><option value="">Select action</option><option value="${next}">${next==="packed"?"Mark Packed":next==="dispatched"?"Dispatched":"Delivered"}</option></select>`:"—"}</td></tr>`}).join(""):`<tr><td colspan="8">${empty()}</td></tr>`;
+      $("#ordersRows").innerHTML=rows.length?rows.map(o=>{const next=o.status==="new-order"?"packed":o.status==="packed"?"dispatched":o.status==="dispatched"?"delivered":"";return `<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customer_name)}</td><td>${esc(formatOrderType(o.order_type))}</td><td>${esc(o.product_name)}</td><td>${num(o.quantity,4)} ${esc(o.unit||"")}</td><td>${badge(o.status)}</td><td>${date(o.created_at)}</td><td>${next?`<select class="form-control order-action-select" data-transition="${o.id}" aria-label="Order action"><option value="">Select action</option><option value="${next}">${next==="packed"?"Mark Packed":next==="dispatched"?"Dispatched":"Delivered"}</option></select>`:"—"}</td></tr>`}).join(""):`<tr><td colspan="8">${empty()}</td></tr>`;
       $("#ordersRows").querySelectorAll("select[data-transition]").forEach(sel=>sel.onchange=async()=>{const status=sel.value;if(!status)return;sel.disabled=true;try{await API.orders.transition(sel.dataset.transition,status);toast(`Order marked ${status.replaceAll("-"," ")}.`);loadPage("orders")}catch(e){toast(e.message,"error");sel.disabled=false;sel.value=""}});
     };
     $("#orderSearch").oninput=draw;$("#orderStatus").onchange=draw;draw();
@@ -1334,7 +1334,16 @@ async function renderNotifications(
 }
 
 // Shared helper: Order table
-function orderTable(rows = []) {
+function formatOrderType(type) {
+    const labels = {
+        readymade: "Finished",
+        manufactured: "Semi-Finished"
+      };
+
+    const normalizedType = String(type || "").toLowerCase().trim();
+
+    return labels[normalizedType] || type || "—";
+}
     return rows.length
         ? `<div class="table-wrap">
             <table class="data-table">
