@@ -2760,3 +2760,80 @@ textarea:focus {
   .profile-popover { right:0; }
   .mobile-menu { margin-right:auto; }
 }
+
+/* =====================================
+   ADMIN PANEL — MATCH MAIN ERP SIDEBAR
+   CSS-only refinements
+===================================== */
+
+.admin-shell .sidebar,
+body:has(#adminNav) .sidebar {
+    background: #fff;
+    color: #1f2937;
+    border-right: 1px solid #e5e7eb;
+}
+
+/* Brand / Logo positioning */
+body:has(#adminNav) .brand {
+    align-items: center;
+    padding: 8px 10px 18px;
+    margin: -8px -10px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #111827;
+    transform: translateY(5px);
+}
+
+/* Logo interaction */
+body:has(#adminNav) .brand-mark {
+    transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
+    will-change: transform;
+}
+
+body:has(#adminNav) .brand:hover .brand-mark {
+    transform: translateY(-2px) rotate(-4deg) scale(1.04);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .22);
+}
+
+/* Admin navigation layout */
+body:has(#adminNav) #adminNav {
+    display: grid;
+    gap: 5px;
+}
+
+/* Navigation items */
+body:has(#adminNav) #adminNav .nav-item {
+    min-height: 42px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    color: #263449;
+    font-size: 14px;
+    font-weight: 550;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+
+/* Hover effect */
+body:has(#adminNav) #adminNav .nav-item:hover {
+    background: #f1f5f9;
+    color: #2563eb;
+    transform: translateX(2px);
+}
+
+/* Active navigation */
+body:has(#adminNav) #adminNav .nav-item.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 650;
+}
+
+/* Sidebar bottom separator */
+body:has(#adminNav) .sidebar-bottom {
+    border-top-color: #dde4f1;
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    body:has(#adminNav) .brand-mark,
+    body:has(#adminNav) #adminNav .nav-item {
+        transition: none;
+    }
+}
