@@ -1220,23 +1220,6 @@ async function renderNotifications(
             return `${year}-${month}-${day}`;
         }
 
-       const filteredRows = rows.filter(n => {
-            const notificationDate = getLocalDate(n.created_at);
-
-            if (!notificationDate) return false;
-            if (fromDate && notificationDate < fromDate) return false;
-            if (toDate && notificationDate > toDate) return false;
-
-            if (
-                notificationType !== "all" &&
-                String(n.title || "").trim().toLowerCase() !==
-                notificationType.toLowerCase()
-            ) {
-                return false;
-            }
-
-
-      
         const filteredRows = rows.filter(n => {
             const notificationDate = getLocalDate(n.created_at);
 
