@@ -900,8 +900,8 @@ function editProduct(id) {
                         sel.disabled = false;
                         sel.value = "";
                     }
-                };
-            };
+                });
+            });
     });
 
     $("#orderSearch").oninput = draw;
