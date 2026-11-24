@@ -902,7 +902,7 @@ function editProduct(id) {
                     }
                 };
             };
-    };
+    });
 
     $("#orderSearch").oninput = draw;
     $("#orderStatus").onchange = draw;
