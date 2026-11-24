@@ -758,24 +758,157 @@ function editProduct(id) {
     m.querySelector("#receiveForm").onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));data.product=Number(data.product);data.quantity=Number(data.quantity);try{await API.inventory.receive(data);m.remove();toast("Stock received.");loadPage("inventory")}catch(ex){toast(ex.message,"error")}};
   }
 
-  function renderOrders(){
-    const statuses=[["","All Orders"],["new-order","New Order"],["in-production","In Production"],["packed","Packed"],["dispatched","Dispatched"],["delivered","Delivered"]];
-    pageEl.innerHTML=`<section class="card order-create-section">
-        <div class="section-head"><h2>Create Order</h2></div>
-        <div id="orderFormHost"></div>
-      </section>
-      <section class="card order-list-section">
-        <div class="section-head"><h2>Orders</h2></div>
-        <div class="filters"><input id="orderSearch" placeholder="Search order, customer or product"><select id="orderStatus">${statuses.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></div>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Customer</th><th>Type</th><th>Product</th><th>Qty</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="ordersRows"></tbody></table></div>
-      </section>`;
+  function renderOrders() {
+    const statuses = [
+        ["", "All Orders"],
+        ["new-order", "New Order"],
+        ["in-production", "In Production"],
+        ["packed", "Packed"],
+        ["dispatched", "Dispatched"],
+        ["delivered", "Delivered"]
+    ];
+
+    pageEl.innerHTML = `
+        <section class="card order-create-section">
+            <div class="section-head">
+                <h2>Create Order</h2>
+            </div>
+            <div id="orderFormHost"></div>
+        </section>
+
+        <section class="card order-list-section">
+            <div class="section-head">
+                <h2>Orders</h2>
+            </div>
+
+            <div class="filters">
+                <input id="orderSearch"
+                    placeholder="Search order, customer or product">
+
+                <select id="orderStatus">
+                    ${statuses.map(x =>
+                        `<option value="${x[0]}">${x[1]}</option>`
+                    ).join("")}
+                </select>
+            </div>
+
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Type</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="ordersRows"></tbody>
+                </table>
+            </div>
+        </section>
+    `;
+
     renderOrderForm();
-    const draw=()=>{const q=$("#orderSearch").value.toLowerCase(),status=$("#orderStatus").value;const rows=state.orders.filter(o=>(!status||o.status===status)&&(!q||`${o.order_number} ${o.customer_name} ${o.product_name}`.toLowerCase().includes(q)));
-      $("#ordersRows").innerHTML=rows.length?rows.map(o=>{const next=o.status==="new-order"?"packed":o.status==="packed"?"dispatched":o.status==="dispatched"?"delivered":"";return `<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customer_name)}</td><td>${esc(o.order_type||"Semi-Finished")}</td><td>${esc(o.product_name)}</td><td>${num(o.quantity,4)} ${esc(o.unit||"")}</td><td>${badge(o.status)}</td><td>${date(o.created_at)}</td><td>${next?`<select class="form-control order-action-select" data-transition="${o.id}" aria-label="Order action"><option value="">Select action</option><option value="${next}">${next==="packed"?"Mark Packed":next==="dispatched"?"Dispatched":"Delivered"}</option></select>`:"—"}</td></tr>`}).join(""):`<tr><td colspan="8">${empty()}</td></tr>`;
-      $("#ordersRows").querySelectorAll("select[data-transition]").forEach(sel=>sel.onchange=async()=>{const status=sel.value;if(!status)return;sel.disabled=true;try{await API.orders.transition(sel.dataset.transition,status);toast(`Order marked ${status.replaceAll("-"," ")}.`);loadPage("orders")}catch(e){toast(e.message,"error");sel.disabled=false;sel.value=""}});
+
+    const draw = () => {
+        const q = $("#orderSearch").value.toLowerCase();
+        const status = $("#orderStatus").value;
+
+        const rows = state.orders.filter(o =>
+            (!status || o.status === status) &&
+            (!q || `${o.order_number} ${o.customer_name} ${o.product_name}`
+                .toLowerCase()
+                .includes(q))
+        );
+
+        $("#ordersRows").innerHTML = rows.length
+            ? rows.map(o => {
+                const next =
+                    o.status === "new-order" ? "packed" :
+                    o.status === "packed" ? "dispatched" :
+                    o.status === "dispatched" ? "delivered" :
+                    "";
+
+                // Direct order type display mapping
+                const rawType = String(o.order_type || "")
+                    .trim()
+                    .toLowerCase();
+
+                const displayType =
+                    rawType === "manufactured" ? "Semi-Finished" :
+                    rawType === "readymade" ? "Finished" :
+                    o.order_type || "—";
+
+                return `
+                    <tr>
+                        <td><strong>${esc(o.order_number)}</strong></td>
+                        <td>${esc(o.customer_name)}</td>
+                        <td>${esc(displayType)}</td>
+                        <td>${esc(o.product_name)}</td>
+                        <td>${num(o.quantity, 4)} ${esc(o.unit || "")}</td>
+                        <td>${badge(o.status)}</td>
+                        <td>${date(o.created_at)}</td>
+                        <td>
+                            ${
+                                next
+                                    ? `<select class="form-control order-action-select"
+                                        data-transition="${o.id}"
+                                        aria-label="Order action">
+                                        <option value="">Select action</option>
+                                        <option value="${next}">
+                                            ${
+                                                next === "packed"
+                                                    ? "Mark Packed"
+                                                    : next === "dispatched"
+                                                    ? "Dispatched"
+                                                    : "Delivered"
+                                            }
+                                        </option>
+                                    </select>`
+                                    : "—"
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join("")
+            : `<tr><td colspan="8">${empty()}</td></tr>`;
+
+        $("#ordersRows")
+            .querySelectorAll("select[data-transition]")
+            .forEach(sel => {
+                sel.onchange = async () => {
+                    const status = sel.value;
+                    if (!status) return;
+
+                    sel.disabled = true;
+
+                    try {
+                        await API.orders.transition(
+                            sel.dataset.transition,
+                            status
+                        );
+
+                        toast(`Order marked ${status.replaceAll("-", " ")}.`);
+                        loadPage("orders");
+                    } catch (e) {
+                        toast(e.message, "error");
+                        sel.disabled = false;
+                        sel.value = "";
+                    }
+                };
+            };
     };
-    $("#orderSearch").oninput=draw;$("#orderStatus").onchange=draw;draw();
-  }
+
+    $("#orderSearch").oninput = draw;
+    $("#orderStatus").onchange = draw;
+
+    draw();
+}
 
   function renderOrderForm() {
     const host = $("#orderFormHost");
