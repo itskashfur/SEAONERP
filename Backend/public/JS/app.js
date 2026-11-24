@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async()=>{
   const pageInfo={
     dashboard:["Dashboard","A simple view of today's operations."],
     inventory:["Inventory","Current stock, minimum levels and stock movements."],
-    orders:["Orders","Create and track manufactured and readymade orders."],
+    orders:["Orders","Create and track Semi-Finished and Finished orders."],
     production:["Production","Production queue, output and completion."],
     bom:["BOM / Materials","Map raw and semi-finished materials to products."],
     warehouse:["Warehouse","Inward, putaway, pick, pack and dispatch movements."],
@@ -771,7 +771,7 @@ function editProduct(id) {
       </section>`;
     renderOrderForm();
     const draw=()=>{const q=$("#orderSearch").value.toLowerCase(),status=$("#orderStatus").value;const rows=state.orders.filter(o=>(!status||o.status===status)&&(!q||`${o.order_number} ${o.customer_name} ${o.product_name}`.toLowerCase().includes(q)));
-      $("#ordersRows").innerHTML=rows.length?rows.map(o=>{const next=o.status==="new-order"?"packed":o.status==="packed"?"dispatched":o.status==="dispatched"?"delivered":"";return `<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customer_name)}</td><td>${esc(o.order_type||"manufactured")}</td><td>${esc(o.product_name)}</td><td>${num(o.quantity,4)} ${esc(o.unit||"")}</td><td>${badge(o.status)}</td><td>${date(o.created_at)}</td><td>${next?`<select class="form-control order-action-select" data-transition="${o.id}" aria-label="Order action"><option value="">Select action</option><option value="${next}">${next==="packed"?"Mark Packed":next==="dispatched"?"Dispatched":"Delivered"}</option></select>`:"—"}</td></tr>`}).join(""):`<tr><td colspan="8">${empty()}</td></tr>`;
+      $("#ordersRows").innerHTML=rows.length?rows.map(o=>{const next=o.status==="new-order"?"packed":o.status==="packed"?"dispatched":o.status==="dispatched"?"delivered":"";return `<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customer_name)}</td><td>${esc(o.order_type||"Semi-Finished")}</td><td>${esc(o.product_name)}</td><td>${num(o.quantity,4)} ${esc(o.unit||"")}</td><td>${badge(o.status)}</td><td>${date(o.created_at)}</td><td>${next?`<select class="form-control order-action-select" data-transition="${o.id}" aria-label="Order action"><option value="">Select action</option><option value="${next}">${next==="packed"?"Mark Packed":next==="dispatched"?"Dispatched":"Delivered"}</option></select>`:"—"}</td></tr>`}).join(""):`<tr><td colspan="8">${empty()}</td></tr>`;
       $("#ordersRows").querySelectorAll("select[data-transition]").forEach(sel=>sel.onchange=async()=>{const status=sel.value;if(!status)return;sel.disabled=true;try{await API.orders.transition(sel.dataset.transition,status);toast(`Order marked ${status.replaceAll("-"," ")}.`);loadPage("orders")}catch(e){toast(e.message,"error");sel.disabled=false;sel.value=""}});
     };
     $("#orderSearch").oninput=draw;$("#orderStatus").onchange=draw;draw();
@@ -830,7 +830,7 @@ function editProduct(id) {
     const category = form.elements.product_category;
     const product = form.elements.product;
     const quantity = form.elements.quantity;
-    const fulfilment = { value: "manufactured" };
+    const fulfilment = { value: "Semi-Finished" };
     const panel = host.querySelector("#availabilityPanel");
     const submit = host.querySelector("#createOrderButton");
     let timer = null;
@@ -886,9 +886,9 @@ function editProduct(id) {
         panel.className = result.available ? "alert success" : "alert danger";
         panel.innerHTML = `
           <strong>${esc(result.message || "Availability checked.")}</strong>
-          ${fulfilment.value === "readymade"
+          ${fulfilment.value === "Finished"
             ? `<div>Available stock: ${num(result.finished_stock)} ${esc(result.unit || "")} · Requested: ${num(result.required)} ${esc(result.unit || "")}</div>`
-            : `<div>Manufactured order: BOM materials will be reserved when the order is accepted.</div>`}
+            : `<div>Semi-Finished order: BOM materials will be reserved when the order is accepted.</div>`}
           ${materials}`;
         submit.disabled = !result.available;
       } catch (error) {
@@ -924,7 +924,7 @@ function editProduct(id) {
       submit.textContent = "Creating Order…";
 
       const data = Object.fromEntries(new FormData(form));
-      data.order_type = "manufactured";
+      data.order_type = "Semi-Finished";
       data.product = Number(data.product);
       data.quantity = Number(data.quantity);
       delete data.product_category; // classification is represented by the selected Product.
@@ -979,7 +979,7 @@ function editProduct(id) {
     pageEl.innerHTML=`<div class="section-head"><div><h2>Bill of Materials</h2><p class="muted">Choose a finished or semi-finished product to view and manage only its materials.</p></div></div>
       <div class="card"><div class="card-body"><div class="field" style="max-width:520px;margin-top:10px"><label>Product</label><select id="bomProduct"><option value="">Select a product to view/edit BOM</option>${options}</select></div></div></div>
       <div id="bomContent" class="card" style="margin-top:16px">${empty("Select a product above to view or edit its bill of materials.")}</div>
-      <div class="alert info" style="margin-top:16px">BOM quantities are used for live material checks during order creation. Material stock is consumed atomically when a manufactured order is accepted.</div>`;
+      <div class="alert info" style="margin-top:16px">BOM quantities are used for live material checks during order creation. Material stock is consumed atomically when a Semi-Finished order is accepted.</div>`;
     const selectProduct=$("#bomProduct");selectProduct.onchange=draw;
     function draw(){const id=selectProduct.value;if(!id){$("#bomContent").innerHTML=empty("Select a product above to view or edit its bill of materials.");return;}const rows=state.bom.filter(x=>String(x.product)===String(id));
       $("#bomContent").innerHTML=`<div class="section-head"><div><h2>Material Requirements — ${esc(state.products.find(p=>String(p.id)===String(id))?.name||"")}</h2><p class="muted">Set the quantity of each component needed for one finished unit.</p></div><button class="btn primary" data-add-bom>+ Add Material</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Raw Material</th><th>Quantity per Unit</th><th>Unit</th><th>Actions</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.component_name)}</td><td>${num(x.quantity_per_unit,4)}</td><td>${esc(x.unit)}</td><td><div class="actions"><button class="btn small" data-edit-bom="${x.id}">Edit</button><button class="btn small danger" data-delete-bom="${x.id}">Delete</button></div></td></tr>`).join(""):`<tr><td colspan="5">${empty("No BOM materials defined for this product yet.")}</td></tr>`}</tbody></table></div>`;
