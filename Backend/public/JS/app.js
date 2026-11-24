@@ -1333,8 +1333,20 @@ async function renderNotifications(
     }
 }
 
-// Shared helper: Order table
+// Shared helper: Format order type for display
 function formatOrderType(type) {
+    const labels = {
+        readymade: "Finished",
+        manufactured: "Semi-Finished"
+    };
+
+    const normalizedType = String(type || "").toLowerCase().trim();
+    return labels[normalizedType] || type || "—";
+}
+
+
+// Shared helper: Order table
+function orderTable(rows = []) {
     return rows.length
         ? `<div class="table-wrap">
             <table class="data-table">
