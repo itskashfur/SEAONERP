@@ -917,7 +917,7 @@ function editProduct(id) {
     host.innerHTML = `
       <form id="orderForm" class="form-grid">
         ${field("Customer", "customer_name", "text", "Customer name", true)}
-        ${field("Customer email", "customer_email", "email", "")}
+        ${field("Email", "customer_email", "email", "")}
         <div class="field full">
           <label for="vendor_emails">CC emails <span class="muted">(optional, multiple allowed)</span></label>
           <textarea id="vendor_emails" name="vendor_emails" rows="3"
