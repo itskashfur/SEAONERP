@@ -963,7 +963,10 @@ function editProduct(id) {
     const category = form.elements.product_category;
     const product = form.elements.product;
     const quantity = form.elements.quantity;
-    const fulfilment = { value: "Semi-Finished" };
+    const fulfilment = { value: "manufactured" };
+    function backendOrderType() {
+      return category.value === "finished" ? "readymade" : "manufactured";
+    }
     const panel = host.querySelector("#availabilityPanel");
     const submit = host.querySelector("#createOrderButton");
     let timer = null;
@@ -1006,7 +1009,7 @@ function editProduct(id) {
       panel.textContent = "Checking live inventory and BOM materials…";
 
       try {
-        const result = await API.orders.availability(product.value, qty, fulfilment.value);
+        const result = await API.orders.availability(product.value, qty, backendOrderType());
         if (seq !== requestSequence) return;
 
         const materials = (result.materials || []).map(item => `
@@ -1019,7 +1022,7 @@ function editProduct(id) {
         panel.className = result.available ? "alert success" : "alert danger";
         panel.innerHTML = `
           <strong>${esc(result.message || "Availability checked.")}</strong>
-          ${fulfilment.value === "Finished"
+          ${category.value === "finished"
             ? `<div>Available stock: ${num(result.finished_stock)} ${esc(result.unit || "")} · Requested: ${num(result.required)} ${esc(result.unit || "")}</div>`
             : `<div>Semi-Finished order: BOM materials will be reserved when the order is accepted.</div>`}
           ${materials}`;
@@ -1057,7 +1060,7 @@ function editProduct(id) {
       submit.textContent = "Creating Order…";
 
       const data = Object.fromEntries(new FormData(form));
-      data.order_type = "Semi-Finished";
+      data.order_type = backendOrderType();
       data.product = Number(data.product);
       data.quantity = Number(data.quantity);
       delete data.product_category; // classification is represented by the selected Product.
