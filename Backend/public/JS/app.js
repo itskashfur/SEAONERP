@@ -919,7 +919,7 @@ function editProduct(id) {
         ${field("Customer", "customer_name", "text", "Customer name", true)}
         ${field("Email", "customer_email", "email", "")}
         <div class="field full">
-          <label for="vendor_emails">CC emails <span class="muted">(Multiple Email Alowed(,))</span></label>
+          <label for="vendor_emails">CC emails <span class="muted">(Multiple Email Allowed(,))</span></label>
           <textarea id="vendor_emails" name="vendor_emails" rows="3"
             placeholder="accounts@example.com, manager@example.com"></textarea>
           <small class="muted">Separate addresses with commas, semicolons or new lines.</small>
