@@ -417,7 +417,7 @@ function productFormMarkup(product = {}) {
       </div>
 
       <div class="field">
-        <label>Available Quantity</label>
+        <label>Add Quantity</label>
         <input
           type="number"
           name="quantity"
